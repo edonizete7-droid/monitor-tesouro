@@ -5,21 +5,24 @@ from email.mime.text import MIMEText
 
 # --- CONFIGURAÇÕES DE SEGURANÇA ---
 GMAIL_USER = 'edonizete7@gmail.com'
-# O GitHub lerá a 'Secret' automaticamente. No PC, substitua pela sua senha de 16 dígitos se quiser testar.
 GMAIL_PASS = os.getenv('GMAIL_PASS') or 'SUA_SENHA_DE_16_DIGITOS_AQUI'
 
-# --- SUA CARTEIRA DE 10 TÍTULOS ---
+# --- SUA CARTEIRA DE 14 TÍTULOS ATUALIZADA ---
+# Dica: O 'alerta' deve ser MENOR que a taxa que você comprou para indicar lucro na venda.
 minha_carteira = [
-    {"nome": "IPCA+ 2029", "filtro": "Tesouro IPCA+ 2029", "alerta": 6.10},
-    {"nome": "IPCA+ 2035 (Sem)", "filtro": "Tesouro IPCA+ com Juros Semestrais 2035", "alerta": 6.50},
-    {"nome": "IPCA+ 2035 (Ap2)", "filtro": "Tesouro IPCA+ com Juros Semestrais 2035", "alerta": 6.50},
-    {"nome": "Vazio 04", "filtro": "", "alerta": 0.0},
-    {"nome": "Vazio 05", "filtro": "", "alerta": 0.0},
-    {"nome": "Vazio 06", "filtro": "", "alerta": 0.0},
-    {"nome": "Vazio 07", "filtro": "", "alerta": 0.0},
-    {"nome": "Vazio 08", "filtro": "", "alerta": 0.0},
-    {"nome": "Vazio 09", "filtro": "", "alerta": 0.0},
-    {"nome": "Vazio 10", "filtro": "", "alerta": 0.0},
+    {"nome": "IPCA+ 2026", "filtro": "Tesouro IPCA+ 2026", "alerta": 4.50},
+    {"nome": "IPCA+ 2029", "filtro": "Tesouro IPCA+ 2029", "alerta": 6.00},
+    {"nome": "IPCA+ 2035 (Semestral 1)", "filtro": "Tesouro IPCA+ com Juros Semestrais 2035", "alerta": 6.30},
+    {"nome": "IPCA+ 2035 (Semestral 2)", "filtro": "Tesouro IPCA+ com Juros Semestrais 2035", "alerta": 6.00},
+    {"nome": "IPCA+ 2035 (Semestral 3)", "filtro": "Tesouro IPCA+ com Juros Semestrais 2035", "alerta": 7.20},
+    {"nome": "IPCA+ 2040 (Semestral 1)", "filtro": "Tesouro IPCA+ com Juros Semestrais 2040", "alerta": 6.00},
+    {"nome": "IPCA+ 2040 (Semestral 2)", "filtro": "Tesouro IPCA+ com Juros Semestrais 2040", "alerta": 6.30},
+    {"nome": "IPCA+ 2040 (Semestral 3)", "filtro": "Tesouro IPCA+ com Juros Semestrais 2040", "alerta": 7.30},
+    {"nome": "IPCA+ 2055 (Semestral 1)", "filtro": "Tesouro IPCA+ com Juros Semestrais 2055", "alerta": 6.10},
+    {"nome": "IPCA+ 2055 (Semestral 2)", "filtro": "Tesouro IPCA+ com Juros Semestrais 2055", "alerta": 7.20},
+    {"nome": "PREFIXADO 2031", "filtro": "Tesouro Prefixado com Juros Semestrais 2031", "alerta": 12.10},
+    {"nome": "SELIC 2029", "filtro": "Tesouro Selic 2029", "alerta": 0.10},
+    {"nome": "SELIC 2031", "filtro": "Tesouro Selic 2031", "alerta": 0.15}
 ]
 
 def buscar_taxas_api():
@@ -47,7 +50,7 @@ def enviar_email(assunto, mensagem):
         print(f"❌ Erro no envio: {e}")
 
 def executar_monitoramento():
-    print("🔎 Verificando taxas no site do Tesouro...")
+    print("🔎 Verificando 14 títulos no Tesouro...")
     taxas_hoje = buscar_taxas_api()
     if not taxas_hoje:
         return
@@ -56,14 +59,13 @@ def executar_monitoramento():
     for titulo in minha_carteira:
         if titulo['filtro'] in taxas_hoje:
             taxa_atual = taxas_hoje[titulo['filtro']]
-            # Lógica: Se a taxa do site for menor ou igual ao seu alerta
             if taxa_atual <= titulo['alerta'] and titulo['alerta'] > 0:
                 alertas.append(f"📌 {titulo['nome']}: Mercado {taxa_atual}% <= Alerta {titulo['alerta']}%")
 
     if alertas:
         enviar_email("⚠️ OPORTUNIDADE TESOURO DIRETO", "\n".join(alertas))
     else:
-        print("😴 Nenhuma oportunidade detectada no momento.")
+        print("😴 Nenhuma das 14 taxas atingiu o limite de alerta.")
 
 if __name__ == "__main__":
     executar_monitoramento()
