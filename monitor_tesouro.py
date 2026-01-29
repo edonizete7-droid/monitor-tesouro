@@ -25,17 +25,20 @@ minha_carteira = [
     {"nome": "SELIC 2031", "filtro": "Tesouro Selic 2031", "alerta": 0.15}
 ]
 
-def buscar_taxas_api():
+def buscar_taxas_api()
     url = "https://www.tesourodireto.com.br/json/br/com/b3/tesourodireto/service/api/treasurybondsinfo.json"
+    # Adicionamos este 'headers' para evitar o erro que apareceu no seu log
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36'
+    }
     try:
-        response = requests.get(url, timeout=15)
+        response = requests.get(url, headers=headers, timeout=15)
         dados = response.json()
         lista = dados['response']['TrsuryBondIndxList']
         return {t['TrsuryBond']['nm']: t['TrsuryBond']['anulInvstmtRate'] for t in lista}
     except Exception as e:
         print(f"Erro ao acessar API: {e}")
         return None
-
 def enviar_email(assunto, mensagem):
     msg = MIMEText(mensagem)
     msg['Subject'] = assunto
@@ -69,3 +72,4 @@ def executar_monitoramento():
 
 if __name__ == "__main__":
     executar_monitoramento()
+
