@@ -7,7 +7,6 @@ from email.mime.text import MIMEText
 GMAIL_USER = 'edonizete7@gmail.com'
 GMAIL_PASS = os.getenv('GMAIL_PASS')
 
-# Lista completa com seus 14 títulos
 minha_carteira = [
     {"nome": "IPCA+ 2026", "filtro": "Tesouro IPCA+ 2026", "alerta": 4.50},
     {"nome": "IPCA+ 2029", "filtro": "Tesouro IPCA+ 2029", "alerta": 6.00},
@@ -26,36 +25,35 @@ minha_carteira = [
 ]
 
 def buscar_taxas_api():
-    # Link oficial da B3 que alimenta o Tesouro
+    # LINK ATUALIZADO: Este é o endereço que o site oficial usa agora
     url = "https://www.tesourodireto.com.br/json/br/com/b3/tesourodireto/service/api/treasurybondsinfo.json"
     
-    # Headers reforçados para evitar bloqueios (simula um navegador real)
     headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
         'Accept': 'application/json, text/plain, */*',
         'Referer': 'https://www.tesourodireto.com.br/titulos/precos-e-taxas.asp',
-        'Origin': 'https://www.tesourodireto.com.br'
+        'Host': 'www.tesourodireto.com.br'
     }
     
     try:
         response = requests.get(url, headers=headers, timeout=30)
         
-        # Se o site responder algo diferente de OK (200)
         if response.status_code != 200:
-            print(f"⚠️ O site do Tesouro retornou erro HTTP {response.status_code}")
+            print(f"⚠️ O site retornou erro {response.status_code}")
             return None
             
         dados = response.json()
-        lista = dados['response']['TrsuryBondIndxList']
         
-        # Cria um dicionário: { "Nome do Titulo": Taxa }
-        return {t['TrsuryBond']['nm']: t['TrsuryBond']['anulInvstmtRate'] for t in lista}
-        
-    except requests.exceptions.JSONDecodeError:
-        print("❌ Erro: O site retornou uma página vazia ou inválida (Mercado pode estar suspenso).")
-        return None
+        # Acessando os dados na estrutura correta do JSON da B3
+        if 'response' in dados and 'TrsuryBondIndxList' in dados['response']:
+            lista = dados['response']['TrsuryBondIndxList']
+            return {t['TrsuryBond']['nm']: t['TrsuryBond']['anulInvstmtRate'] for t in lista}
+        else:
+            print("❌ Estrutura do JSON mudou.")
+            return None
+            
     except Exception as e:
-        print(f"⚠️ Erro inesperado: {e}")
+        print(f"❌ Erro na extração: {e}")
         return None
 
 def executar():
@@ -63,34 +61,29 @@ def executar():
     taxas = buscar_taxas_api()
     
     if not taxas:
-        print("❌ Operação cancelada por falta de dados da API.")
+        print("❌ Operação abortada. Site do Tesouro indisponível no momento.")
         return
 
     alertas_encontrados = []
     for t in minha_carteira:
         taxa_mercado = taxas.get(t['filtro'])
-        
-        if taxa_mercado is not None:
-            # Verifica se a taxa de mercado é MENOR ou IGUAL ao seu alerta
-            if taxa_mercado <= t['alerta'] and t['alerta'] > 0:
-                alertas_encontrados.append(f"📌 {t['nome']}: Mercado {taxa_mercado}% <= Alerta {t['alerta']}%")
-        else:
-            print(f"❓ Filtro não encontrado: {t['filtro']}")
+        if taxa_mercado is not None and taxa_mercado <= t['alerta'] and t['alerta'] > 0:
+            alertas_encontrados.append(f"📌 {t['nome']}: Mercado {taxa_mercado}% <= Alerta {t['alerta']}%")
 
     if alertas_encontrados:
-        corpo_email = "Oportunidades encontradas:\n\n" + "\n".join(alertas_encontrados)
+        corpo_email = "OPORTUNIDADES:\n\n" + "\n".join(alertas_encontrados)
         msg = MIMEText(corpo_email)
-        msg['Subject'] = "⚠️ OPORTUNIDADE: Alerta de Taxas Tesouro"
+        msg['Subject'] = "⚠️ ALERTA TESOURO"
         msg['From'], msg['To'] = GMAIL_USER, GMAIL_USER
         try:
             with smtplib.SMTP_SSL('smtp.gmail.com', 465) as s:
                 s.login(GMAIL_USER, GMAIL_PASS)
                 s.send_message(msg)
-            print("✅ Alerta enviado com sucesso por e-mail!")
-        except Exception as e:
-            print(f"❌ Erro ao enviar e-mail: {e}")
+            print("✅ Alerta enviado!")
+        except:
+            print("❌ Erro no envio do e-mail.")
     else:
-        print(f"😴 Monitoradas {len(minha_carteira)} taxas. Nenhuma oportunidade de lucro no momento.")
+        print(f"😴 Monitoradas {len(minha_carteira)} taxas. Sem oportunidades.")
 
 if __name__ == "__main__":
     executar()
