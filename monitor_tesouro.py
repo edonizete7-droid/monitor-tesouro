@@ -7,7 +7,7 @@ from email.mime.text import MIMEText
 GMAIL_USER = 'edonizete7@gmail.com'
 GMAIL_PASS = os.getenv('GMAIL_PASS')
 
-# Lista completa com seus 14 títulos (organizados por filtros oficiais da B3)
+# Lista completa com seus 14 títulos
 minha_carteira = [
     {"nome": "IPCA+ 2026", "filtro": "Tesouro IPCA+ 2026", "alerta": 4.50},
     {"nome": "IPCA+ 2029", "filtro": "Tesouro IPCA+ 2029", "alerta": 6.00},
@@ -36,15 +36,14 @@ def buscar_taxas_api():
         lista = dados['response']['TrsuryBondIndxList']
         return {t['TrsuryBond']['nm']: t['TrsuryBond']['anulInvstmtRate'] for t in lista}
     except Exception as e:
-        print(f"⚠️ Erro de conexão (Mercado pode estar fechado): {e}")
+        print(f"⚠️ Erro ao acessar API: {e}")
         return None
 
 def executar():
-    # Agora o nome da função (buscar_taxas_api) combina perfeitamente
-    taxas = buscar_taxas_api() 
+    taxas = buscar_taxas_api() # Nome da função deve ser igual ao 'def' acima
     
     if not taxas:
-        print("❌ Não foi possível ler as taxas. O site do Tesouro pode estar em manutenção.")
+        print("❌ Não foi possível ler as taxas.")
         return
 
     alertas_encontrados = []
@@ -62,11 +61,11 @@ def executar():
             with smtplib.SMTP_SSL('smtp.gmail.com', 465) as s:
                 s.login(GMAIL_USER, GMAIL_PASS)
                 s.send_message(msg)
-            print("✅ E-mail de alerta enviado com sucesso!")
+            print("✅ Alerta enviado!")
         except Exception as e:
             print(f"❌ Erro ao enviar e-mail: {e}")
     else:
-        print(f"😴 Monitoradas {len(minha_carteira)} taxas. Nenhuma oportunidade no momento.")
+        print(f"😴 Monitoradas {len(minha_carteira)} taxas. Sem oportunidades.")
 
 if __name__ == "__main__":
     executar()
